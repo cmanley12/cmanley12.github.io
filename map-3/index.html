@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8 />
+    <title>Geo409 Map 02</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: whitesmoke;
+            font-family: Lato, sans-serif;
+            color: #0D0000;
+        }
+        header {
+            padding: 6px 10%;
+        }
+        h1 {
+            display: inline-block;
+            margin-right: 20px;
+            color: #001323;
+        }
+        h2 {
+            display: inline-block;
+            color: #001323;
+        }
+        #map {
+            width: 80%;
+            height: 540px;
+            margin: 10px auto;
+        }
+        footer {
+            padding: 6px 10%;
+            width: 80%;
+        }
+        p {
+            font-size: 1em;
+            color: #001323;
+        }
+        /* Additional style rules go here! */
+        
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Map Pros Project</h1>
+        <h2>Power Plant Data</h2>
+    </header>
+
+        <div id='map'></div>
+
+    <footer>
+        <p>Map authored by Cameron Manley</p>
+        <p>This map gives US data of Hydro, Natural Gas, and Coal power plants that produce between 250 and 500 MW of energy. You are a growing company that is looking to find new prime locations to start producing. This map will give you an idea of where certain types of energy are prominent. By clicking a single time, you can get a 500 km radius of a city you may be interested in and see what plants are in that area. By double-clicking, you will get a 200 km radius of the same information.</p>
+    </footer>
+    
+    <script src="power-plants-assignment.js"></script>
+    <script>
+        
+        var map = L.map('map', {
+            center: [39.8,-98.6],
+            zoom: 4,
+            doubleClickZoom: false
+        });
+       
+        var tiles = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', 
+                                         {
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+            subdomains: 'abcd',
+            minZoom: 4,
+            maxZoom: 10
+        });
+        map.addLayer(tiles);
+        
+        plants.features.sort(function(a,b) {
+            return b.properties.capacity - a.properties.capacity;
+        });
+        
+        // Hydro Data
+      var hydroLayer = 
+        L.geoJson(plants, {
+            pointToLayer: function(feature,latlng) {
+                 return L.circleMarker(latlng, {
+                     color: "#3182bd",
+                     weight: 1,
+                     fillColor: "#3182bd",
+                     fillOpacity: .8,
+                     radius: getRadius(feature.properties.capacity)
+                 });   
+            },
+            filter: function(feature, layer) {
+                
+                var latLng = L.latLng(feature.geometry.coordinates[1],feature.geometry.coordinates[0]);
+        //        console.log(latLng);
+        //        console.log(feature);
+        //        console.log(layer);
+                
+                if(feature.properties.source["Hydro"] >= 250 &&
+                  feature.properties.source["Hydro"] <= 500){
+                    return feature;
+                }
+        },
+            onEachFeature: function(feature, layer) {
+                
+                var coords = L.latLng(feature.geometry.coordinates[1],feature.geometry.coordinates[0]);
+                
+                var content = "<b>"+feature.properties.plant_name+"</b><br>"+feature.properties.capacity.toLocaleString()+" MW<br>";
+                
+                for (var fuel in feature.properties.source){
+        content+="<b>"+fuel+"</b>: "+feature.properties.source["Hydro"].toLocaleString()+" MW</b><br>";
+    }
+    layer.bindPopup(content); 
+                
+                layer.on('mouseover', function() {
+                 //   console.log("hello");
+                    layer.setStyle({
+                        fillColor: 'blue'
+                    });
+                });
+                
+                
+                layer.on('mouseout', function() {
+                    layer.setStyle({
+                        fillColor: "#3182bd"
+                    });
+                });
+                
+        },
+            
+            
+        }).addTo(map);
+        
+     //Natural Gas Data   
+        var natGasLayer =
+        L.geoJson(plants, {
+            pointToLayer: function(feature,latlng) {
+                 return L.circleMarker(latlng, {
+                     color: "#9ecae1",
+                     weight: 1,
+                     fillColor: "#9ecae1",
+                     fillOpacity: .8,
+                     radius: getRadius(feature.properties.capacity)
+                 });   
+            },
+            filter: function(feature, layer) {
+                
+                var latLng = L.latLng(feature.geometry.coordinates[1],feature.geometry.coordinates[0]);
+        //        console.log(latLng);
+        //        console.log(feature);
+        //        console.log(layer);
+                
+                if(feature.properties.source["Natural Gas"] >= 250 &&
+                  feature.properties.source["Natural Gas"] <= 500){
+                    return feature;
+                }
+        },
+            onEachFeature: function(feature, layer) {
+                
+                var coords = L.latLng(feature.geometry.coordinates[1],feature.geometry.coordinates[0]);
+                
+                var content = "<b>"+feature.properties.plant_name+"</b><br>"+feature.properties.capacity.toLocaleString()+" MW<br>";
+                
+                for (var fuel in feature.properties.source){
+        content+="<b>"+fuel+"</b>: "+feature.properties.source["Natural Gas"].toLocaleString()+" MW</b><br>";
+    }
+    layer.bindPopup(content); 
+                
+                layer.on('mouseover', function() {
+                 //   console.log("hello");
+                    layer.setStyle({
+                        fillColor: 'blue'
+                    });
+                });
+                
+                 layer.on('mouseout', function() {
+                    layer.setStyle({
+                        fillColor: "#9ecae1"
+                    });
+                });
+                
+        },
+            
+            
+        }).addTo(map);
+        
+        // Coal Data
+        var coalLayer =
+        L.geoJson(plants, {
+            pointToLayer: function(feature,latlng) {
+                 return L.circleMarker(latlng, {
+                     color: "#deebf7",
+                     weight: 1,
+                     fillColor: "#deebf7",
+                     fillOpacity: .8,
+                     radius: getRadius(feature.properties.capacity)
+                 });   
+            },
+            filter: function(feature, layer) {
+                
+                var latLng = L.latLng(feature.geometry.coordinates[1],feature.geometry.coordinates[0]);
+        //        console.log(latLng);
+        //        console.log(feature);
+        //        console.log(layer);
+                
+                if(feature.properties.source["Coal"] >= 250 &&
+                  feature.properties.source["Coal"] <= 500){
+                    return feature;
+                }
+        },
+            onEachFeature: function(feature, layer) {
+                
+                var coords = L.latLng(feature.geometry.coordinates[1],feature.geometry.coordinates[0]);
+                
+                var content = "<b>"+feature.properties.plant_name+"</b><br>"+feature.properties.capacity.toLocaleString()+" MW<br>";
+                
+                for (var fuel in feature.properties.source){
+        content+="<b>"+fuel+"</b>: "+feature.properties.source["Coal"].toLocaleString()+" MW</b><br>";
+    }
+    layer.bindPopup(content); 
+                
+                layer.on('mouseover', function() {
+                 //   console.log("hello");
+                    layer.setStyle({
+                        fillColor: "blue"
+                    });
+                });
+                
+                
+                layer.on('mouseout', function() {
+                    layer.setStyle({
+                        fillColor: "#deebf7"
+                    });
+                });
+                
+        },
+            
+        }).addTo(map);        
+            
+        function getRadius(val) {
+            var radius = Math.sqrt(val/Math.PI);
+            return radius;   
+        } 
+        
+         var sourcesLayers = {
+                "<b style='color:#3182bd'>Hydro</b>": hydroLayer,
+                "<b style='color:#9ecae1'>Natural Gas</b>": natGasLayer,
+                "<b style='color:#deebf7'>Coal</b>": coalLayer
+        }
+         
+         
+         
+         
+         // Click Event
+        
+         
+         var spotlightMarker;
+         map.on('click', function(e) {
+             hydroLayer.eachLayer(function(layer) {
+                console.log(layer);
+                 var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+                 
+                 if(distance > 500) {
+                     layer.setStyle({
+                         stroke: false,
+                         fill: false
+                     });  
+                 } else {
+                     layer.setStyle({
+                         stroke: true,
+                         fill: true  
+                     });  
+                     layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>"+"<b>Hydro: </b> "+layer.feature.properties.source["Hydro"].toLocaleString()+" MW<br>"+"This plant is <b>"+distance.toLocaleString()+" km</b><br> from the point you clicked.<br>");
+                 } 
+             });
+             
+             if(map.hasLayer(spotlightMarker)) {               
+                map.removeLayer(spotlightMarker);
+            }
+             
+             if(map.hasLayer(dblClickLight)) {
+                map.removeLayer(dblClickLight);
+            }
+             
+             
+             var spotlightLocation = e.latlng;
+             spotlightMarker = L.circle(spotlightLocation, 500000, {
+                 opacity: .8,
+                 color: 'white',
+                 stroke: true,
+                 fill: false
+             });
+             spotlightMarker.addTo(map);
+             spotlightMarker.bringToBack();
+             
+         });
+        
+        map.on('click', function(e) {
+             natGasLayer.eachLayer(function(layer) {
+                 var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+                 
+                 if(distance > 500) {
+                     layer.setStyle({
+                         stroke: false,
+                         fill: false
+                     });  
+                 } else {
+                     layer.setStyle({
+                         stroke: true,
+                         fill: true  
+                     });  
+                     layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>"+"<b>Natural Gas: </b> "+layer.feature.properties.source["Natural Gas"].toLocaleString()+" MW<br>"+"This plant is <b>"+distance.toLocaleString()+" km</b><br> from the point you clicked.<br>");
+                 } 
+             });
+            
+//            var spotlightLocation = e.latlng;
+//             var spotlightMarker = L.circle(spotlightLocation, {
+//                 opacity: .5,
+//                 color: 'white',
+//                 radius: 500000
+//             });
+//             spotlightMarker.addTo(map);
+             
+         });
+            
+        
+        map.on('click', function(e) {
+             coalLayer.eachLayer(function(layer) {
+                 var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+                 
+                 if(distance > 500) {
+                     layer.setStyle({
+                         stroke: false,
+                         fill: false
+                     });  
+                 } else {
+                     layer.setStyle({
+                         stroke: true,
+                         fill: true  
+                     });  
+                     layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>"+"<b>Coal: </b> "+layer.feature.properties.source["Coal"].toLocaleString()+" MW<br>"+"This plant is <b>"+distance.toLocaleString()+" km</b><br> from the point you clicked.<br>");
+                 } 
+             });
+            
+//            var spotlightLocation = e.latlng;
+//             var spotlightMarker = L.circle(spotlightLocation, {
+//                 opacity: .5,
+//                 color: 'white',
+//                 radius: 500000
+//             });
+//             spotlightMarker.addTo(map);
+             
+         });
+        
+        
+        
+        // Double Click Event
+                
+        var dblClickLight;
+        map.on('dblclick', function(e) {
+             hydroLayer.eachLayer(function(layer) {
+                 
+                 var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+                 
+                 if(distance > 200) {
+                     layer.setStyle({
+                         stroke: false,
+                         fill: false
+                     });  
+                 } else {
+                     layer.setStyle({
+                         stroke: true,
+                         fill: true  
+                     });  
+                     layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>"+"<b>Hydro: </b> "+layer.feature.properties.source["Hydro"].toLocaleString()+" MW<br>"+"This plant is <b>"+distance.toLocaleString()+" km</b><br> from the point you clicked.<br>");
+                 } 
+             });
+            
+            if(map.hasLayer(dblClickLight)) {
+                map.removeLayer(dblClickLight);
+            }
+            
+            if(map.hasLayer(spotlightMarker)) {
+                map.removeLayer(spotlightMarker);
+            }
+            
+            var dblLocation = e.latlng;
+            dblClickLight = L.circle(dblLocation, 200000, {
+                 opacity: .8,
+                 color: 'white',
+                 stroke: false
+             });
+             dblClickLight.addTo(map);
+             dblClickLight.bringToBack();
+            
+            
+         });
+        
+        map.on('dblclick', function(e) {
+             natGasLayer.eachLayer(function(layer) {
+                 var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+                 
+                 if(distance > 200) {
+                     layer.setStyle({
+                         stroke: false,
+                         fill: false
+                     });  
+                 } else {
+                     layer.setStyle({
+                         stroke: true,
+                         fill: true  
+                     });  
+                     layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>"+"<b>Natural Gas: </b> "+layer.feature.properties.source["Natural Gas"].toLocaleString()+" MW<br>"+"This plant is <b>"+distance.toLocaleString()+" km</b><br> from the point you clicked.<br>");
+                 } 
+             });
+         });
+        
+        map.on('dblclick', function(e) {
+             coalLayer.eachLayer(function(layer) {
+                 var distance = e.latlng.distanceTo(layer.getLatLng())/1000;
+                 
+                 if(distance > 200) {
+                     layer.setStyle({
+                         stroke: false,
+                         fill: false
+                     });  
+                 } else {
+                     layer.setStyle({
+                         stroke: true,
+                         fill: true  
+                     });  
+                     layer.bindPopup("<b>"+layer.feature.properties.plant_name+"</b><br>"+"<b>Coal: </b> "+layer.feature.properties.source["Coal"].toLocaleString()+" MW<br>"+"This plant is <b>"+distance.toLocaleString()+" km</b><br> from the point you clicked.<br>");
+                 } 
+             });
+         });
+        
+        
+        
+            L.control.layers(null, sourcesLayers, { collapsed:false }).addTo(map);
+        
+    </script>
+    
+</body>
+
+</html>
