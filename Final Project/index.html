@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8 />
+    <title>Geo409 Final Project</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.0/papaparse.min.js"></script>
+    <script src="simple_statistics.js"></script>
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: whitesmoke;
+            font-family: Lato, sans-serif;
+            color: #0D0000;
+        }
+        header {
+            padding: 6px 10%;
+        }
+        h1 {
+            position: absolute;
+            z-index: 100;
+            top: 10px;
+            left: 60px;
+            padding: 8px 15px;
+            margin: 0;
+            color: whitesmoke;
+            font-size: 1.5em;
+            background: rgba(75, 66, 152, 1);
+            border-radius: 50px;
+        }
+        h2 {
+            position: absolute;
+            z-index: 100;
+            top: 20px;
+            left: 220px;
+            padding: 8px 15px;
+            margin: 0;
+            color: whitesmoke;
+            font-size: 1.0em;
+            background: rgba(75, 66, 152, 1);
+            border-radius: 50px;
+        }
+        #map {
+            position: absolute;
+            width: 100%;
+            top: 0;
+            bottom: 0;
+        }
+        footer {
+            position: absolute;
+            z-index: 100;
+            bottom: 10px;
+            right: 30px;
+            padding: 8px 15px;
+            margin: 0;
+            color: whitesmoke;
+            font-size: 1.0em;
+            background: rgba(75, 66, 152, 0.58);
+            border-radius: 50px;
+        }
+        p {
+            font-size: .85em;
+            color: whitesmoke;
+        }
+        .legend {
+            padding: 6px 8px;
+            font-size: 1em;
+            background: rgba(75, 66, 152, 0.58);
+            color: whitesmoke;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            width: 160px;
+        }
+        .legend h3 {
+            font-size: 1.1em;
+            font-weight: bold;
+            line-height: 1em;
+            color: whitesmoke;
+            margin: 0;
+        }
+        .legend li {
+            list-style-type: none;
+            height: 22px;
+            color: whitesmoke;
+        }
+        .legend span {
+            width: 30px;
+            height: 20px;
+            float: left;
+            margin-right: 10px;
+        }
+        #ui-controls {
+            width: 176px;   
+            padding: 8px 15px 8px 15px;
+            background: rgba(75, 66, 152, 0.58);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px; 
+            color: whitesmoke;
+        }
+        #ui-controls .min {
+            float: left;
+        }
+        #ui-controls .max {
+            float: right;
+        }
+            .year-slider {
+            width: 100%;
+        }
+        #ui-menu {
+            width: 176px;   
+            padding: 8px 15px 8px 15px;
+            background: rgba(75, 66, 152, 0.58);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px; 
+            color: whitesmoke;
+        }
+        label {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .info {
+            padding: 6px 8px;
+            font-size: 1em;
+            background: whitesmoke;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            text-align: right;
+            margin: 0;
+        }
+        .leaflet-popup-content {
+            max-width: 160px;
+        /* Additional style rules go here! */
+        
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>US Exports</h1>
+        <h2>How Much Does Your State Export</h2>
+    </header>
+    
+    <div id='map'></div>
+    <div id="ui-controls">
+    <label><span class="min">2000</span><span class="max">2013</span>
+        <input type="range" min = "2000", max= "2013", 
+               value = "2000", step= "1", class="year-slider"></input>
+    </label>
+    </div>
+    
+    <div id='ui-menu'>
+     <label>Choose a data attribute:<br>
+        <select name="total">
+            <option value="Animals" selected>Animal Data</option>
+            <option value="Cotton">Cotton Data</option> 
+            <option value="Crops">Crop Data</option>
+        </select>
+        </label>
+    </div>
+
+    <footer>
+        <p>Map authored by Cameron Manley</p>
+        <p></p>
+    </footer>
+
+    
+    
+    <script>
+        
+        var map = L.map('map', {
+            center: [39.8,-98.6],
+            zoom: 4,
+            doubleClickZoom: true
+        });
+       
+        var tiles = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', 
+                                         {
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+            subdomains: 'abcd',
+            minZoom: 4,
+            maxZoom: 10
+        });
+        
+        map.addLayer(tiles);
+        
+        var normData;
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        var dataLayer;
+        var attribute = 2000;
+        
+        
+        $.getJSON("us-states.json", function(states) {
+
+            var files = ["cotton-exports.csv", "crops-exports.csv", "animal-exports.csv", "total-ag-exports.csv"];
+            var allResults = {};
+
+            for (var i = 0; i < files.length; i++)
+            {
+                Papa.parse(files[i], {
+                    download: true,
+                    header: true,
+                    skipEmptyLines: true,
+                    error: function(err, file, inputElem, reason) { /* handle*/ },
+                    complete: function(results) {
+                        allResults[results.data[0].type] = results.data;
+                       // console.log(allResults)
+                        if (Object.keys(allResults).length == files.length)
+                        {
+                            // Do whatever you need to do
+                            //console.log(allResults);
+                            processData(states,allResults);
+                        }
+                    }
+                });
+            }
+        //ui();
+        });
+        
+        
+        
+//            function ui(){
+//                // creating a function for the selection menu
+//                var dataView = L.control({position: 'topright'});
+//
+//                dataView.onAdd = function(map) {
+//
+//                    var controls = L.DomUtil.get('ui-menu');
+//                    return controls;
+//                }
+//
+//            dataView.addTo(map);
+//            }
+//
+//            $('select[name="total"]').change(function() {
+//
+//                attribute = $(this).val();
+//                drawMap();
+//
+//            })
+        
+        
+        
+        var sliderControl = L.control({ position: 'bottomleft'} );
+
+        sliderControl.onAdd = function(map) {
+
+            var slider = L.DomUtil.get("ui-controls");
+
+                L.DomEvent.addListener(slider, 'mousedown', function(e) { 
+
+                    L.DomEvent.stopPropagation(e); 
+
+                });
+
+            return slider;
+        }
+
+        sliderControl.addTo(map);
+        
+        $(".year-slider")
+            .on('input change', function() {
+                attribute = $(this).val();
+                updateMap();
+            });
+        
+        function processData(states, data) {
+
+            for(var d in data) {
+
+                for (var state in states.features) {
+                    var props = states.features[state].properties;
+                    props[d] = {};
+                    for (var d2 in data[d]){
+                        if(props.POSTAL == data[d][d2].postal){
+                             props[d] = data[d][d2];
+                        }
+                        
+                    }
+                }
+                //} // end if
+            } // end outer for loop
+            
+         //  console.log(states);
+          
+            
+            drawLegend();
+            createSliderUI();
+            drawMap(states);
+            drawInfo();
+
+        }
+        
+        
+        
+        
+        
+        function drawMap(states) {
+            
+            dataLayer = L.geoJson(states, {
+                style: function(feature) {
+                    return{
+                        color: '#383838',
+                        weight: 1,
+                        fillOpacity: 1,
+                        fillColor: '#1f78b4',
+                    };
+                }
+        }).addTo(map);
+            
+            dataLayer.eachLayer(function(layer) {
+                //console.log(layer.feature.properties["animals"][2000]);
+                var currValue = layer.feature.properties["animals"][attribute];
+                layer.bindPopup("<b>"+layer.feature.properties["NAME"]+" </b></br>" + currValue + " million USD");
+            
+            layer.on('mouseover', function() {
+                    this.setStyle({
+                        color: 'yellow'
+                    });
+                    updateInfo(this);
+                    $('.info').show();
+                });
+                
+                layer.on('mouseout', function() {
+                    this.setStyle({
+                        color: '#383838'
+                    });
+                    $('.info').hide();
+                });
+            
+       
+        });
+            
+             updateMap();
+        }
+        
+        function updateMap() {
+            var breaks = getClassBreaks();
+            //console.log(breaks);
+            dataLayer.eachLayer(function(layer) {
+                
+                var attValue = layer.feature.properties.animals[attribute].toLocaleString();
+                var normValue = layer.feature.properties.total[attribute];
+                attValue = attValue.replace(',','');
+                normValue = normValue.replace(',','');
+                
+                var value = 100*(attValue / normValue).toLocaleString();
+                
+                layer.setStyle({
+                   
+                    fillColor: getColor(value, breaks)
+                });
+                
+                var currValue = layer.feature.properties["animals"][attribute];
+                layer.bindPopup("<b>"+layer.feature.properties["NAME"]+" </b></br>" + currValue + " million USD");
+                
+            });
+            
+            updateLegend(breaks);
+        }
+        
+        
+        function getClassBreaks() {
+            var values = [];
+            
+            dataLayer.eachLayer(function(layer) {
+                
+                var attValue = layer.feature.properties.animals[attribute].toLocaleString();
+                var normValue = layer.feature.properties.total[attribute];
+                attValue = attValue.replace(',','');
+                normValue = normValue.replace(',','');
+                
+                var value = 100*(attValue / normValue).toLocaleString();
+            
+                values.push(value);
+                
+            });
+        
+            var breaks = ss.quantile(values, [0, 0.2, 0.4, 0.6, 0.8, 1]);
+            //console.log(breaks);
+            return breaks;
+        
+        }
+        
+        function getColor(d, breaks) {
+            if(d <= breaks[1]) {
+                return '#f1eef6';
+            } else if(d <= breaks[2]) {
+                return '#bdc9e1';
+            } else if(d <= breaks[3]) {
+                return '#74a9cf';
+            } else if(d <= breaks[4]) {
+                return '#2b8cbe'
+            } else if(d <= breaks[5]) {
+                return '#045a8d'
+            }
+        }
+        
+        function drawLegend() {
+            
+            var legend = L.control({position: 'topleft'});
+            
+            legend.onAdd = function (map) {
+
+                var div = L.DomUtil.create('div', 'legend');
+                
+                return div;
+                    
+            };
+
+            legend.addTo(map);
+            
+        }
+        
+        function updateLegend(breaks) {
+            
+                var legend = $('.legend').html("<h3> Animals Export: " + attribute + " (as a percentage of USD to total agricultural exports)</h3><ul>");
+                // console.log(legend);
+            
+
+                for (var i = 0; i < breaks.length-1; i++) {
+                    var color = getColor(breaks[i + 1], breaks);
+                //   console.log(color);
+                //   console.log(breaks);
+                    legend.append('<li><span style="background:' + color + '"></span> ' +
+                        (breaks[i]).toLocaleString() + ' &mdash; ' + 
+                        (breaks[i + 1]).toLocaleString() + '</li>');
+                    }
+            legend.append("</ul>");  
+        };
+        
+        function createSliderUI(){
+            // creating a function for the selection menu
+            var dataView = L.control({position: 'bottomleft'});
+            
+            dataView.onAdd = function(map) {
+
+                var controls = L.DomUtil.get('ui-controls');
+                return controls;
+            }
+
+        dataView.addTo(map);
+        }
+        
+        function drawInfo() {
+            console.log("hi")
+            var info = L.control({position: 'topright'});
+
+            info.onAdd = function(map) {
+
+                var div = L.DomUtil.create('div', 'info');
+
+                return div;  
+            }
+            // create an info tag that pops up in the top right corner by county
+            info.addTo(map);
+            $('.info').hide();
+            // hides the box so it doesn't show up too early
+        }
+        
+        function updateInfo(layer) {
+            //console.log(layer.feature.properties.animals);
+            var props = layer.feature.properties.animals;
+            var name = layer.feature.properties;
+
+            var html = "<h3>"+name['NAME']+"</h3>"+"2000: "+props[2000]+"<br>"+"2001: "+props[2001]+"<br>"+"2002: "+props[2002]+"<br>"+"2003: "+props[2003]+"<br>"+"2004: "+props[2004]+"<br>"+"2005: "+props[2005]+"<br>"+"2006: "+props[2006]+"<br>"+"2007: "+props[2007]+"<br>"+"2008: "+props[2008]+"<br>"+"2009: "+props[2009]+"<br>"+"2010: "+props[2010]+"<br>"+"2011: "+props[2011]+"<br>"+"2012: "+props[2012]+"<br>"+"2013: "+props[2013]+"<br>"+"<b>(in Millions of USD)";
+
+            $(".info").html(html);
+        }
+    
+    
+    
+    
+    
+    
+    
+    
+    </script>
+    
+</body>
+
+</html>
